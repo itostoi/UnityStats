@@ -16,6 +16,7 @@ using UnityEngine;
 // 1) add a stat for isinvulnerable and make damage calc dependent on it
 // 2) add a second event which fires after normal damage calc and sets damage to 0
 // 3) implement a sorting order for events which process damage.
+// If we need to hardcode more than three ordered triggers, we'll implement some kind of sorted event
 abstract public class BaseStat<T, E> where T : IEquatable<T> where E : EventArgs 
 {
     public BaseStat(T baseValue) {
@@ -24,9 +25,9 @@ abstract public class BaseStat<T, E> where T : IEquatable<T> where E : EventArgs
     }
 
     public event EventHandler ValueChange;
-    public event EventHandler<E> TriggerStatuses;
+    public event EventHandler<E> TriggerEffects;
 
-    // Statuses should (almost) never change this (since there's no infra to add/remove statuses correctly)
+    // Effects should (almost) never change this (since there's no infra to add/remove statuses correctly)
     protected T baseValue;
     public T BaseValue {
         get => baseValue;
@@ -41,9 +42,9 @@ abstract public class BaseStat<T, E> where T : IEquatable<T> where E : EventArgs
         ValueChange?.Invoke(this, new EventArgs());
     }
 
-    protected virtual void OnTriggerStatuses(E statusArgs)
+    protected virtual void OnTriggerEffects(E effectEventArgs)
     {
-        TriggerStatuses?.Invoke(this, statusArgs);
+        TriggerEffects?.Invoke(this, effectEventArgs);
     }
 
     // "caches" the calcs which determine the public stat
@@ -59,16 +60,16 @@ abstract public class BaseStat<T, E> where T : IEquatable<T> where E : EventArgs
     protected abstract T Calc(E statValue);
 }
 
-public class FloatStat : BaseStat<float, StatusArgs<float>>
+public class FloatStat : BaseStat<float, StatEventArgs<float>>
 {
     public FloatStat(float initialValue) : base(initialValue) { }
     public override void Refresh()
     {
-        StatusArgs<float> statusArgs = new StatusArgs<float>{StatValue = baseValue};
+        StatEventArgs<float> StatEventArgs = new StatEventArgs<float>{StatValue = baseValue};
         // UnityEngine.Debug.Log("Invoking {0} statuses, ", TriggerStatuses?.GetInvocationList().Length);
-        OnTriggerStatuses(statusArgs);
+        OnTriggerEffects(StatEventArgs);
         // Explicit calc using upstream stats
-        float newCalcValue = Calc(statusArgs);
+        float newCalcValue = Calc(StatEventArgs);
 
         if (!newCalcValue.Equals(calcValue))
         {
@@ -77,14 +78,14 @@ public class FloatStat : BaseStat<float, StatusArgs<float>>
             OnValueChange();
         }
     }
-    protected override float Calc(StatusArgs<float> statusArgs)
+    protected override float Calc(StatEventArgs<float> StatEventArgs)
     {
-        return statusArgs.StatValue;
+        return StatEventArgs.StatValue;
     }
 }
 
 // Statuses can modify a buffable stat more elegantly.
-public class BuffableStat : BaseStat<float, BuffableArgs>
+public class BuffableStat : BaseStat<float, BuffableStatEventArgs>
 {
     public BuffableStat(float initialValue) : base(initialValue) {}
 
@@ -95,13 +96,13 @@ public class BuffableStat : BaseStat<float, BuffableArgs>
 
     public override void Refresh()
     {
-        // glue additional stuff onto statusargs.
-        BuffableArgs statusArgs = new BuffableArgs{StatValue = baseValue, MultBuff = 1f, AddBuff = 0f};
-        OnTriggerStatuses(statusArgs);
-        multBuff = statusArgs.MultBuff;
-        addBuff = statusArgs.AddBuff;
+        // glue additional stuff onto StatEventArgs.
+        BuffableStatEventArgs StatEventArgs = new BuffableStatEventArgs{StatValue = baseValue, MultBuff = 1f, AddBuff = 0f};
+        OnTriggerEffects(StatEventArgs);
+        multBuff = StatEventArgs.MultBuff;
+        addBuff = StatEventArgs.AddBuff;
 
-        float newCalcValue = Calc(statusArgs);
+        float newCalcValue = Calc(StatEventArgs);
 
         if (!newCalcValue.Equals(calcValue))
         {
@@ -110,8 +111,50 @@ public class BuffableStat : BaseStat<float, BuffableArgs>
             OnValueChange();
         }
     }
-    protected override float Calc(BuffableArgs statusArgs)
+    protected override float Calc(BuffableStatEventArgs StatEventArgs)
     {
         return (baseValue + addBuff) * multBuff;
+    }
+}
+
+// A lil awkward. Basically, effects cannot directly modify how health changes.
+// Any effects which modify how much to change health should be implemented in an "upstream" layer.
+public class HealthStat : BaseStat<float, HealthChangeEventArgs>
+{
+    private BuffableStat maxHealth;
+
+    public HealthStat (BuffableStat maxHealth) : base(maxHealth.BaseValue)
+    {
+        this.maxHealth = maxHealth; 
+        maxHealth.ValueChange += Refresh;
+    }
+    
+    public void ChangeHealth(float amt)
+    {
+        baseValue = Math.Clamp(baseValue + amt, 0, maxHealth.Value);
+        Refresh();
+    }
+
+    public override void Refresh()
+    {
+        HealthChangeEventArgs statArgs = new HealthChangeEventArgs(baseValue-calcValue, calcValue, maxHealth.Value);
+        // UnityEngine.Debug.Log("Invoking {0} statuses, ", TriggerStatuses?.GetInvocationList().Length);
+        OnTriggerEffects(statArgs);
+
+        // Calc needs to clamp since it's called when the maxHealth changes.
+        float newCalcValue = Calc(statArgs);
+
+        if (!newCalcValue.Equals(calcValue))
+        {
+            calcValue = newCalcValue;
+            baseValue = newCalcValue;
+            // Let dependents know
+            OnValueChange();
+        }
+    }
+
+    protected override float Calc(HealthChangeEventArgs args)
+    {
+        return Math.Clamp(baseValue, 0, maxHealth.Value);
     }
 }

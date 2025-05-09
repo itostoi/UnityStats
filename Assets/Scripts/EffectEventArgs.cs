@@ -1,12 +1,12 @@
 using System;
 
 // Statuses receive information when deciding how to modify a stat.
-public class StatusArgs<T> : EventArgs where T : IEquatable<T>
+public class StatEventArgs<T> : EventArgs where T : IEquatable<T>
 {
     public T StatValue;
 }
 
-public class BuffableArgs : EventArgs
+public class BuffableStatEventArgs : EventArgs
 {
     public float StatValue;
     public float MultBuff;

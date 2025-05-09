@@ -15,12 +15,12 @@ public class FlatBuffHealth : Effect {
         this.buffValue = buffValue;
     }
     
-    private void AddStat(System.Object o, BuffableArgs args) {
+    private void AddStat(System.Object o, BuffableStatEventArgs args) {
         args.AddBuff += buffValue;
     }
     public override bool Attach(GameObject target) {
         if (target.TryGetComponent(out healthManager)) {
-            healthManager.MaxHealth.TriggerStatuses += AddStat;
+            healthManager.MaxHealth.TriggerEffects += AddStat;
             healthManager.MaxHealth.Refresh();
         }
         else 
@@ -33,7 +33,7 @@ public class FlatBuffHealth : Effect {
     public override void Detach()
     {
         if (healthManager != null) {
-            healthManager.MaxHealth.TriggerStatuses -= AddStat;
+            healthManager.MaxHealth.TriggerEffects -= AddStat;
             healthManager.MaxHealth.Refresh();
         }
     }
@@ -42,12 +42,12 @@ public class FlatBuffHealth : Effect {
 public class TestWeaponBuff : Effect {
     TestBehaviour testBehaviour;
     private float buffValue = 0.1f;
-    private void AddStat(System.Object o, BuffableArgs args) {
+    private void AddStat(System.Object o, BuffableStatEventArgs args) {
         args.AddBuff += buffValue;
     }
     public override bool Attach(GameObject target) {
         if (target.TryGetComponent(out testBehaviour)) {
-            testBehaviour.weapon.CritRate.TriggerStatuses += AddStat;
+            testBehaviour.weapon.CritRate.TriggerEffects += AddStat;
             testBehaviour.weapon.CritRate.Refresh();
         }
         else 
@@ -60,7 +60,7 @@ public class TestWeaponBuff : Effect {
     public override void Detach()
     {
         if (testBehaviour != null) {
-            testBehaviour.weapon.CritRate.TriggerStatuses -= AddStat;
+            testBehaviour.weapon.CritRate.TriggerEffects -= AddStat;
             testBehaviour.weapon.CritRate.Refresh();
         }
     }

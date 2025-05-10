@@ -12,7 +12,7 @@ public class Weapon
         gameObject = g;
     }
     
-    public void Use (HealthManager target)
+    public void Use (StatManager target)
     {
         Damage outgoing = new Damage(gameObject){Value = Attack.Value};
         if (UnityEngine.Random.Range(0f, 1f) > CritRate.Value)

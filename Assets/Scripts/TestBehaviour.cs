@@ -6,12 +6,12 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Collider2D))]
 public class TestBehaviour : MonoBehaviour
 {
-    private HealthManager healthManager;
+    private StatManager healthManager;
     public Weapon weapon;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        healthManager = GetComponent<HealthManager>();
+        healthManager = GetComponent<StatManager>();
         weapon = new Weapon(gameObject);
     }
 
@@ -39,7 +39,7 @@ public class TestBehaviour : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.S))
         {
-            BuffWeapon();
+            // BuffWeapon();
         }
         if (Input.GetKeyDown(KeyCode.D))
         {
@@ -67,11 +67,11 @@ public class TestBehaviour : MonoBehaviour
         s.effect = new FlatBuffHealth(2f);
         s.duration = new PermanentDuration();
     }
-    private void BuffWeapon()
-    {
-        Status s = gameObject.AddComponent<Status>();
-        s.effect = new TestWeaponBuff();
-        s.duration = new PermanentDuration();
-    }
+    // private void BuffWeapon()
+    // {
+    //     Status s = gameObject.AddComponent<Status>();
+    //     // s.effect = new TestWeaponBuff();
+    //     s.duration = new PermanentDuration();
+    // }
 }
 

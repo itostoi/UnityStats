@@ -17,7 +17,7 @@ using UnityEngine;
 // 2) add a second event which fires after normal damage calc and sets damage to 0
 // 3) implement a sorting order for events which process damage.
 // If we need to hardcode more than three ordered triggers, we'll implement some kind of sorted event
-abstract public class BaseStat<T, E> where T : IEquatable<T> where E : EventArgs 
+abstract public class BaseStat<T, E> where E : EventArgs 
 {
     public BaseStat(T baseValue) {
         this.baseValue = baseValue; 

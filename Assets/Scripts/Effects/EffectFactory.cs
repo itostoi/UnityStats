@@ -5,7 +5,9 @@ public class EffectFactory
     public enum ItemName
     {
         LUNCH_BOX,
-        PENCIL
+        PENCIL,
+        CYCLE_A,
+        CYCLE_B,
     }
     private static EffectFactory instance;
     public static EffectFactory Instance { 
@@ -23,6 +25,10 @@ public class EffectFactory
             return new HashSet<Effect>{new FlatBuffHealth(10f)};
         case ItemName.PENCIL:
             return new HashSet<Effect>{new AdditiveBuff("Attack", 10f)};
+        case ItemName.CYCLE_A:
+            return new HashSet<Effect>{new CrossStatBuff("MaxHealth", "Defense", 1f)};
+        case ItemName.CYCLE_B:
+            return new HashSet<Effect>{new CrossStatBuff("Defense", "MaxHealth", 1f)};
         default:
             Debug.LogWarning("Effect Enum not implemented");
             return null;

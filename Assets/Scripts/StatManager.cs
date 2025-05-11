@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using Unity.VisualScripting;
 using UnityEngine;
 
 // Holds every stat a unit has, and has triggers. May eventually need to be broken up.
@@ -12,6 +10,8 @@ public class StatManager : MonoBehaviour
     private float baseHealth = 20f;
     [SerializeField]
     private float baseDefense = 3f;
+    [SerializeField]
+    private float baseAttack = 10f;
 
     public BuffableStat MaxHealth;
     
@@ -27,11 +27,12 @@ public class StatManager : MonoBehaviour
     private Dictionary<string, BuffableStat> buffableStats;
     void Start()
     { 
-        // Reflection to assemble a dict of buffable stats
+        Attack = new BuffableStat(baseAttack);
         Defense = new BuffableStat(baseDefense);
         MaxHealth = new BuffableStat(baseHealth);
         Health = new HealthStat(MaxHealth);
 
+        // Reflection to assemble a dict of buffable stats
         buffableStats = 
             typeof(StatManager).GetFields().Where(
             f => f.FieldType.Equals(typeof(BuffableStat)) || f.FieldType.IsSubclassOf(typeof(BuffableStat))
@@ -48,8 +49,15 @@ public class StatManager : MonoBehaviour
 #if (UNITY_EDITOR)
     void OnDrawGizmos()
     {
+        string debugText = System.String.Join(
+            Environment.NewLine,
+            $"Health: {Health.Value}",
+            $"MaxHealth: {MaxHealth.Value}",
+            $"Attack: {Attack.Value}",
+            $"Defense: {Defense.Value}"
+        );
         if (Application.isPlaying)
-            UnityEditor.Handles.Label(transform.position+Vector3.up, $"Health: {Health.Value}\n Max: {MaxHealth.Value}");
+            UnityEditor.Handles.Label(transform.position+Vector3.up, debugText);
     }
 #endif
 

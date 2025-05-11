@@ -33,7 +33,7 @@ public class ItemSlot : MonoBehaviour
     
     public void RemoveItem() 
     {
-        occupant.Detach();
+        if (occupant != null) occupant.Detach();
         occupant = null;
     }
 }
